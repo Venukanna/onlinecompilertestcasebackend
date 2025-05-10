@@ -36,44 +36,84 @@
 
 
 
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Check if the file argument is passed
-if [ -z "$1" ]; then
-    echo "No file provided"
+# Improved Code Runner Script
+# Supports: Java, Python, C, C++, JavaScript, HTML/CSS, Rust, Go, PHP, Ruby
+
+set -euo pipefail  # Enable strict mode
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %T')] $1"
+}
+
+# Check if file argument is provided
+if [[ -z "$1" ]]; then
+    log "ERROR: No file provided"
     exit 1
 fi
 
-# Create a temp directory for this run
+# Validate file exists
+if [[ ! -f "$1" ]]; then
+    log "ERROR: File '$1' does not exist"
+    exit 1
+fi
+
+# Create isolated workspace
 WORKDIR=$(mktemp -d)
+trap 'rm -rf "$WORKDIR"' EXIT  # Ensure cleanup on exit
+
+log "Preparing workspace in $WORKDIR"
 cp "$1" "$WORKDIR/"
 cd "$WORKDIR" || exit 1
 
-case "$1" in
+filename=$(basename "$1")
+filetype="${filename##*.}"
+
+log "Executing $filename ($filetype)"
+
+case "$filename" in
     *.java)
-        javac "$(basename "$1")" && java -cp . "$(basename "$1" .java)"
+        javac "$filename" && java -cp . "${filename%.java}"
         ;;
     *.py)
-        python3 "$(basename "$1")"
+        python3 "$filename"
         ;;
     *.c)
-        gcc "$(basename "$1")" -o main && ./main
+        gcc "$filename" -o main -Wall -Wextra && ./main
         ;;
     *.cpp)
-        g++ "$(basename "$1")" -o main && ./main
+        g++ "$filename" -o main -Wall -Wextra && ./main
         ;;
     *.js)
-        node "$(basename "$1")"
+        node "$filename"
         ;;
     *.html|*.css)
-        cp -- * /usr/share/nginx/html/
+        mkdir -p /usr/share/nginx/html
+        cp "$filename" /usr/share/nginx/html/
+        log "Starting nginx server"
         nginx -g "daemon off;"
         ;;
+    *.rs)
+        rustc "$filename" -o main && ./main
+        ;;
+    *.go)
+        go run "$filename"
+        ;;
+    *.php)
+        php "$filename"
+        ;;
+    *.rb)
+        ruby "$filename"
+        ;;
+    *.sh)
+        bash "$filename"
+        ;;
     *)
-        echo "Unsupported file type"
+        log "ERROR: Unsupported file type: $filetype"
         exit 1
         ;;
 esac
 
-# Cleanup
-rm -rf "$WORKDIR"
+log "Execution completed successfully"
