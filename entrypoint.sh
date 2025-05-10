@@ -35,85 +35,85 @@
 # rm -rf "$WORKDIR"
 
 
-
 #!/usr/bin/env bash
 
-# Improved Code Runner Script
+# Universal Code Runner with Enhanced Features
 # Supports: Java, Python, C, C++, JavaScript, HTML/CSS, Rust, Go, PHP, Ruby
 
-set -euo pipefail  # Enable strict mode
+set -euo pipefail  # Strict error handling
 
-# Logging function
+# Colorized logging
 log() {
-    echo "[$(date '+%Y-%m-%d %T')] $1"
+    local color=$1; shift
+    printf "\033[${color}m[$(date '+%Y-%m-%d %T')] $*\033[0m\n"
 }
 
-# Check if file argument is provided
-if [[ -z "$1" ]]; then
-    log "ERROR: No file provided"
-    exit 1
-fi
+# Validate input
+[ -z "${1:-}" ] && { log 31 "ERROR: No file provided"; exit 1; }
+[ -f "$1" ] || { log 31 "ERROR: File '$1' not found"; exit 1; }
 
-# Validate file exists
-if [[ ! -f "$1" ]]; then
-    log "ERROR: File '$1' does not exist"
-    exit 1
-fi
+# Create isolated workspace (with automatic cleanup)
+WORKDIR=$(mktemp -d -t runner-XXXXXXXXXX)
+trap 'rm -rf "$WORKDIR"' EXIT INT TERM
 
-# Create isolated workspace
-WORKDIR=$(mktemp -d)
-trap 'rm -rf "$WORKDIR"' EXIT  # Ensure cleanup on exit
-
-log "Preparing workspace in $WORKDIR"
+log 32 "Setting up workspace in $WORKDIR"
 cp "$1" "$WORKDIR/"
 cd "$WORKDIR" || exit 1
 
 filename=$(basename "$1")
-filetype="${filename##*.}"
+extension="${filename##*.}"
 
-log "Executing $filename ($filetype)"
+# Memory and time limits (adjust as needed)
+MAX_MEMORY="512M"
+TIMEOUT_SECONDS=15
 
-case "$filename" in
-    *.java)
-        javac "$filename" && java -cp . "${filename%.java}"
+log 36 "Executing $filename (Type: $extension)"
+
+case "$extension" in
+    java)
+        javac "$filename" && \
+        java -Xmx$MAX_MEMORY -cp . "${filename%.java}"
         ;;
-    *.py)
+    py)
         python3 "$filename"
         ;;
-    *.c)
-        gcc "$filename" -o main -Wall -Wextra && ./main
+    c)
+        gcc "$filename" -o main -Wall -Wextra && \
+        timeout $TIMEOUT_SECONDS ./main
         ;;
-    *.cpp)
-        g++ "$filename" -o main -Wall -Wextra && ./main
+    cpp)
+        g++ "$filename" -o main -Wall -Wextra && \
+        timeout $TIMEOUT_SECONDS ./main
         ;;
-    *.js)
+    js)
         node "$filename"
         ;;
-    *.html|*.css)
+    html|css)
         mkdir -p /usr/share/nginx/html
         cp "$filename" /usr/share/nginx/html/
-        log "Starting nginx server"
-        nginx -g "daemon off;"
+        log 34 "Starting nginx on port ${PORT:-80}"
+        exec nginx -g "daemon off;"
         ;;
-    *.rs)
-        rustc "$filename" -o main && ./main
+    rs)
+        rustc "$filename" -o main && \
+        timeout $TIMEOUT_SECONDS ./main
         ;;
-    *.go)
+    go)
         go run "$filename"
         ;;
-    *.php)
+    php)
         php "$filename"
         ;;
-    *.rb)
+    rb)
         ruby "$filename"
         ;;
-    *.sh)
+    sh)
         bash "$filename"
         ;;
     *)
-        log "ERROR: Unsupported file type: $filetype"
+        log 31 "ERROR: Unsupported file type: $extension"
         exit 1
         ;;
 esac
 
-log "Execution completed successfully"
+log 32 "Execution completed successfully"
