@@ -80,7 +80,8 @@ USER coder
 
 EXPOSE 80 1234 3000 8080
 
-ENTRYPOINT ["/usr/local/bin/run"]
+ENTRYPOINT ["java", "-jar", "/workspace/target/onlinecompilertestcasebackend-0.0.1-SNAPSHOT.jar"]
+
 
 
 
