@@ -1,28 +1,63 @@
-# Stage 1: Build the Spring Boot app with Maven
-FROM maven:3.8.6-openjdk-17 AS build
+# Use Ubuntu 22.04 LTS
+FROM ubuntu:22.04
 
-WORKDIR /app
+# Set non-interactive frontend to avoid prompts
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Copy Maven config and source code
-COPY pom.xml .
-COPY src ./src
+# Install core tools and languages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        # System tools
+        curl \
+        ca-certificates \
+        # Python
+        python3 \
+        python3-pip \
+        python3-venv \
+        # Java
+        openjdk-17-jdk \
+        maven \
+        # Node.js
+        nodejs \
+        npm \
+        # C/C++
+        gcc \
+        g++ \
+        make \
+        # Web server
+        nginx \
+        # Cleanup
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
 
-# Build jar without tests (optional: skip tests for faster build)
-RUN mvn clean package -DskipTests
+# Create a non-root user
+RUN useradd -m coder && \
+    mkdir -p /workspace && \
+    chown coder:coder /workspace
 
-# Stage 2: Run the Spring Boot app
-FROM openjdk:17-jdk-slim
+# Set up workspace
+WORKDIR /workspace
+COPY entrypoint.sh /usr/local/bin/run
+RUN chmod +x /usr/local/bin/run
 
-WORKDIR /app
+# Environment variables
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="/home/coder/.local/bin:${PATH}"
 
-# Copy jar from the build stage
-COPY --from=build /app/target/*.jar app.jar
+# Switch to non-root user
+USER coder
 
-# Expose your backend port (adjust if needed)
-EXPOSE 8080
+# Install global Node.js packages (if needed)
+# RUN npm install -g yarn
 
-# Command to run your Spring Boot app
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Expose common ports:
+# - 80: Nginx
+# - 1234: Custom app port
+# - 3000: Node.js
+# - 8080: Spring Boot
+EXPOSE 80 1234 3000 8080
+
+ENTRYPOINT ["/usr/local/bin/run"]
 
 
 
