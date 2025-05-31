@@ -1,27 +1,37 @@
-
-# Build stage: use Maven to build your project
+# Build stage: compile jar with Maven + JDK
 FROM maven:3.8.1-openjdk-17 AS build
 
 WORKDIR /app
 
-# Copy all source code to /app
 COPY . .
 
-# Build the jar (skip tests for faster build)
 RUN mvn clean package -DskipTests
 
-# Runtime stage: use a smaller Java image to run the jar
+# Runtime stage: openjdk + python + node + gcc + others for code execution
 FROM openjdk:17-jdk-slim
+
+# Install required tools for multi-language compiling/execution
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv \
+    nodejs npm \
+    gcc g++ make \
+    curl \
+    nginx \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy the jar from the build stage to this stage
+# Copy jar file from build stage
 COPY --from=build /app/target/onlinecompilertestcasebackend-0.0.1-SNAPSHOT.jar app.jar
+
+# Copy your entrypoint.sh script and make executable
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8080
 
-# Run the jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
 
 
 # # Use Ubuntu 22.04 LTS
