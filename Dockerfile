@@ -1,63 +1,43 @@
-# Use Ubuntu 22.04 LTS
 FROM ubuntu:22.04
 
-# Set non-interactive frontend to avoid prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install core tools and languages
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        # System tools
-        curl \
-        ca-certificates \
-        # Python
-        python3 \
-        python3-pip \
-        python3-venv \
-        # Java
-        openjdk-17-jdk \
-        maven \
-        # Node.js
-        nodejs \
-        npm \
-        # C/C++
-        gcc \
-        g++ \
-        make \
-        # Web server
-        nginx \
-        # Cleanup
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    python3 \
+    python3-pip \
+    python3-venv \
+    openjdk-17-jdk \
+    maven \
+    gcc \
+    g++ \
+    make \
+    nginx \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user
-RUN useradd -m coder && \
-    mkdir -p /workspace && \
-    chown coder:coder /workspace
+# Install Node.js (LTS) from Nodesource (recommended)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set up workspace
+# Create non-root user and workspace
+RUN useradd -m coder && mkdir -p /workspace && chown coder:coder /workspace
+
 WORKDIR /workspace
 COPY entrypoint.sh /usr/local/bin/run
 RUN chmod +x /usr/local/bin/run
 
-# Environment variables
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH="/home/coder/.local/bin:${PATH}"
 
-# Switch to non-root user
 USER coder
 
-# Install global Node.js packages (if needed)
-# RUN npm install -g yarn
-
-# Expose common ports:
-# - 80: Nginx
-# - 1234: Custom app port
-# - 3000: Node.js
-# - 8080: Spring Boot
 EXPOSE 80 1234 3000 8080
 
 ENTRYPOINT ["/usr/local/bin/run"]
+
 
 
 
