@@ -1,27 +1,29 @@
-# Use an official lightweight Node.js image as base
-FROM node:18-slim
+# Stage 1: Build the Spring Boot app with Maven
+FROM maven:3.8.6-openjdk-17 AS build
 
-# Set working directory
 WORKDIR /app
 
-# Update & install required dependencies
-RUN apt-get update && \
-    apt-get install -y curl git openjdk-17-jdk && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Copy Maven config and source code
+COPY pom.xml .
+COPY src ./src
 
-# Copy package.json and install dependencies
-COPY package*.json ./
-RUN npm install
+# Build jar without tests (optional: skip tests for faster build)
+RUN mvn clean package -DskipTests
 
-# Copy rest of the app
-COPY . .
+# Stage 2: Run the Spring Boot app
+FROM openjdk:17-jdk-slim
 
-# Expose app port
-EXPOSE 3000
+WORKDIR /app
 
-# Start the app
-CMD ["npm", "start"]
+# Copy jar from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose your backend port (adjust if needed)
+EXPOSE 8080
+
+# Command to run your Spring Boot app
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
 
 
 
