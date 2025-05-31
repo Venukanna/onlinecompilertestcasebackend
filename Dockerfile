@@ -1,3 +1,29 @@
+
+# Build stage: use Maven to build your project
+FROM maven:3.8.1-openjdk-17 AS build
+
+WORKDIR /app
+
+# Copy all source code to /app
+COPY . .
+
+# Build the jar (skip tests for faster build)
+RUN mvn clean package -DskipTests
+
+# Runtime stage: use a smaller Java image to run the jar
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Copy the jar from the build stage to this stage
+COPY --from=build /app/target/onlinecompilertestcasebackend-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 8080
+
+# Run the jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
 # # Use Ubuntu 22.04 LTS
 # FROM ubuntu:22.04
 
@@ -42,45 +68,45 @@
 
 
 
-FROM ubuntu:22.04
+# FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive
+# ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    ca-certificates \
-    python3 \
-    python3-pip \
-    python3-venv \
-    openjdk-17-jdk \
-    maven \
-    gcc \
-    g++ \
-    make \
-    nginx \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     curl \
+#     ca-certificates \
+#     python3 \
+#     python3-pip \
+#     python3-venv \
+#     openjdk-17-jdk \
+#     maven \
+#     gcc \
+#     g++ \
+#     make \
+#     nginx \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js (LTS) from Nodesource (recommended)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# # Install Node.js (LTS) from Nodesource (recommended)
+# RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+#     apt-get install -y nodejs && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user and workspace
-RUN useradd -m coder && mkdir -p /workspace && chown coder:coder /workspace
+# # Create non-root user and workspace
+# RUN useradd -m coder && mkdir -p /workspace && chown coder:coder /workspace
 
-WORKDIR /workspace
-COPY entrypoint.sh /usr/local/bin/run
-RUN chmod +x /usr/local/bin/run
+# WORKDIR /workspace
+# COPY entrypoint.sh /usr/local/bin/run
+# RUN chmod +x /usr/local/bin/run
 
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="/home/coder/.local/bin:${PATH}"
+# ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# ENV PATH="/home/coder/.local/bin:${PATH}"
 
-USER coder
+# USER coder
 
-EXPOSE 80 1234 3000 8080
+# EXPOSE 80 1234 3000 8080
 
-ENTRYPOINT ["java", "-jar", "/workspace/target/onlinecompilertestcasebackend-0.0.1-SNAPSHOT.jar"]
+# ENTRYPOINT ["/usr/local/bin/run"]
 
 
 
