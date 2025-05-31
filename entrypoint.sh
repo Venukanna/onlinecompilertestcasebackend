@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -z "$1" ]; then
+  echo "Error: No source code file provided."
+  exit 1
+fi
+
 # Create a temporary directory for execution
 WORKDIR=$(mktemp -d)
 cp "$1" "$WORKDIR/"
