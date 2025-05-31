@@ -24,7 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy the built jar file from the build stage
-COPY --from=build /app/target/onlinecompilertestcasebackend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/compiler-backend-0.0.1-SNAPSHOT.jar app.jar
+
 
 # Copy your entrypoint.sh script and make it executable
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
