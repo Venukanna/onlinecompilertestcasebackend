@@ -1,10 +1,10 @@
 # Use Ubuntu 22.04 LTS
 FROM ubuntu:22.04
 
-# Set non-interactive frontend
+# Avoid interactive prompts during package install
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required languages and tools
+# Install all required languages and tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
@@ -19,32 +19,23 @@ RUN apt-get update && \
         gcc \
         g++ \
         make \
-        nginx \
-    && apt-get clean && \
+        nginx && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Add non-root user
-RUN useradd -m coder && mkdir -p /workspace && chown coder:coder /workspace
-
-# Set working directory
+# Create workspace directory
 WORKDIR /workspace
 
-# Copy and set executable permission for entrypoint script
+# Copy the runner script into the image
 COPY entrypoint.sh /usr/local/bin/run
 RUN chmod +x /usr/local/bin/run
 
-# Set environment variables
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="/home/coder/.local/bin:${PATH}"
-
-# Switch to non-root user
-USER coder
-
-# Expose common ports
+# Expose useful ports
 EXPOSE 80 1234 3000 8080
 
-# Final entrypoint
+# Run the script
 ENTRYPOINT ["/usr/local/bin/run"]
+
 
 
 
