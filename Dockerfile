@@ -1,13 +1,15 @@
-# Build stage: compile jar with Maven + JDK
+# Stage 1: Build your project with Maven + JDK
 FROM maven:3.8.1-openjdk-17 AS build
 
 WORKDIR /app
 
+# Copy everything to /app
 COPY . .
 
+# Run Maven clean package, skip tests for faster build
 RUN mvn clean package -DskipTests
 
-# Runtime stage: openjdk + python + node + gcc + others for code execution
+# Stage 2: Runtime image with Java + Python + Node + GCC + others
 FROM openjdk:17-jdk-slim
 
 # Install required tools for multi-language compiling/execution
@@ -21,16 +23,55 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy jar file from build stage
+# Copy the built jar file from the build stage
 COPY --from=build /app/target/onlinecompilertestcasebackend-0.0.1-SNAPSHOT.jar app.jar
 
-# Copy your entrypoint.sh script and make executable
+# Copy your entrypoint.sh script and make it executable
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8080
 
+# Run your Spring Boot jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+
+
+
+# Build stage: compile jar with Maven + JDK
+# FROM maven:3.8.1-openjdk-17 AS build
+
+# WORKDIR /app
+
+# COPY . .
+
+# RUN mvn clean package -DskipTests
+
+# # Runtime stage: openjdk + python + node + gcc + others for code execution
+# FROM openjdk:17-jdk-slim
+
+# # Install required tools for multi-language compiling/execution
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     python3 python3-pip python3-venv \
+#     nodejs npm \
+#     gcc g++ make \
+#     curl \
+#     nginx \
+#     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# WORKDIR /app
+
+# # Copy jar file from build stage
+# COPY --from=build /app/target/onlinecompilertestcasebackend-0.0.1-SNAPSHOT.jar app.jar
+
+# # Copy your entrypoint.sh script and make executable
+# COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+# RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# EXPOSE 8080
+
+# ENTRYPOINT ["java", "-jar", "app.jar"]
 
 
 
@@ -116,7 +157,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # EXPOSE 80 1234 3000 8080
 
-# ENTRYPOINT ["/usr/local/bin/run"]
+# ENTRYPOINT ["/usr/local/bin/run"      ] 
 
 
 
