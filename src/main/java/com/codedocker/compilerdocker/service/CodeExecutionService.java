@@ -1,4 +1,4 @@
-package com.onlinecompiler.service;
+package com.codedocker.compilerdocker.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
