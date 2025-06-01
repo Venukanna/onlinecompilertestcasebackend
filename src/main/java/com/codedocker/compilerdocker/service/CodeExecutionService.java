@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public class CodeExecutorService {
+public class CodeExecutionService {
 
     public String executeCode(MultipartFile file, String language) throws IOException {
         File tempDir = Files.createTempDirectory("code").toFile();
