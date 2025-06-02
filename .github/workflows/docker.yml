@@ -9,12 +9,11 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     services:
       docker:
-        image: docker:24.0.2-dind
-        privileged: true
+        image: docker:20.10-dind
         options: >-
           --privileged
           --env DOCKER_TLS_CERTDIR=""
@@ -31,12 +30,6 @@ jobs:
       - name: Set Docker host
         run: echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
 
-      - name: Wait for Docker to start
-        run: |
-          for i in {1..30}; do
-            docker info && break || sleep 1
-          done
-
       - name: Debug Docker version
         run: docker version
 
@@ -44,3 +37,8 @@ jobs:
         run: |
           echo "🚀 Building inner Dockerfile"
           docker build -f inner.Dockerfile -t my-inner-image .
+
+      # Optional: Run and test the image
+      # - name: Run Container
+      #   run: |
+      #     docker run --rm my-inner-image
