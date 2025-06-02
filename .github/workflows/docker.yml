@@ -30,15 +30,69 @@ jobs:
       - name: Set Docker host
         run: echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
 
-      - name: Debug Docker version
-        run: docker version
+      - name: Wait for Docker daemon to be ready
+        run: |
+          for i in {1..30}; do
+            docker version && break
+            echo "Waiting for Docker daemon..."
+            sleep 2
+          done
 
       - name: Build Inner Dockerfile
         run: |
           echo "🚀 Building inner Dockerfile"
           docker build -f inner.Dockerfile -t my-inner-image .
 
-      # Optional: Run and test the image
+      # Optional: Run container if needed
       # - name: Run Container
-      #   run: |
-      #     docker run --rm my-inner-image
+      #   run: docker run --rm my-inner-image
+
+
+
+
+
+
+# name: Docker-in-Docker CI
+
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
+
+# jobs:
+#   build-and-test:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 15
+
+#     services:
+#       docker:
+#         image: docker:20.10-dind
+#         options: >-
+#           --privileged
+#           --env DOCKER_TLS_CERTDIR=""
+#         ports:
+#           - 2375:2375
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Set Docker host
+#         run: echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
+
+#       - name: Debug Docker version
+#         run: docker version
+
+#       - name: Build Inner Dockerfile
+#         run: |
+#           echo "🚀 Building inner Dockerfile"
+#           docker build -f inner.Dockerfile -t my-inner-image .
+
+#       # Optional: Run and test the image
+#       # - name: Run Container
+#       #   run: |
+#       #     docker run --rm my-inner-image
