@@ -44,7 +44,3 @@ jobs:
         run: |
           echo "🚀 Building inner Dockerfile"
           docker build -f inner.Dockerfile -t my-inner-image .
-
-      # Optional: Run Container
-      # - name: Run Docker container
-      #   run: docker run --rm my-inner-image
