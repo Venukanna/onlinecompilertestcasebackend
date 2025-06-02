@@ -1,32 +1,33 @@
 FROM ubuntu:20.04
 
-# Prevent prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install essential tools and languages
+# Install required compilers and runtimes
 RUN apt-get update && apt-get install -y \
     build-essential \
-    curl \
     openjdk-17-jdk \
     python3 \
     python3-pip \
     nodejs \
     npm \
+    curl \
+    gcc \
     g++ \
     git \
     && apt-get clean
 
-# Set default Java and Python
+# Set python3 as default
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
-# Optional: Install C/C++ compilers
-RUN apt-get install -y gcc g++
-
-# Optional: Set working directory
+# Setup working directory
 WORKDIR /app
 
-# Copy source code
+# Copy all project files
 COPY . .
 
-# Default command (optional)
-CMD [ "bash" ]
+# Copy and set permissions for entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Final command to run your entrypoint
+CMD ["/entrypoint.sh"]
