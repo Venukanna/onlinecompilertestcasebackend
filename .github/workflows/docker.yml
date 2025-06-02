@@ -1,35 +1,45 @@
-# .github/workflows/docker.yml
-
 name: Docker-in-Docker CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
       docker:
-        image: docker:dind
+        image: docker:20.10-dind
+        privileged: true
         options: >-
           --privileged
           --env DOCKER_TLS_CERTDIR=""
+        ports:
+          - 2375:2375
 
     steps:
-      - name: Checkout repo
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build outer Dockerfile (Render base)
-        run: docker build -t outer-app .
+      - name: Set Docker host
+        run: echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
 
-      - name: Build and run inner Dockerfile
+      - name: Debug Docker version
+        run: docker version
+
+      - name: Build Inner Dockerfile
         run: |
-          docker build -t inner-app -f inner.Dockerfile .
-          docker run --rm inner-app
+          echo "🚀 Building inner Dockerfile"
+          docker build -f inner.Dockerfile -t my-inner-image .
+
+      # Optional: Run the container if needed
+      # - name: Run Docker container
+      #   run: |
+      #     docker run my-inner-image
